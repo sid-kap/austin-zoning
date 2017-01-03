@@ -1,0 +1,7 @@
+cd client
+yarn
+webpack
+cd ..
+cd server
+stack build
+stack exec austin-zoning
