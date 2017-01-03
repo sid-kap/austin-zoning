@@ -8,6 +8,7 @@ executable austin-zoning
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , aeson-qq
                      , wreq
                      , basic-prelude
                      , lens
@@ -16,5 +17,4 @@ executable austin-zoning
                      , aeson-pretty
                      , exceptions
                      , scotty
-                     -- , wai-middleware-static
                      , vector

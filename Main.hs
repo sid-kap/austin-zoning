@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Main where
 
 import BasicPrelude
@@ -16,9 +17,9 @@ import qualified Network.Wreq as Wreq
 import Data.String.Conversions (convertString)
 import Control.Monad.Catch (MonadThrow, throwM)
 import GHC.Generics (Generic)
+import Data.Aeson.QQ (aesonQQ)
 
 import qualified Web.Scotty as Scotty
--- import Network.Wai.Middleware.Static (static)
 import qualified Data.Vector as V
 
 (->>) :: a -> b -> (a,b)
@@ -35,18 +36,14 @@ instance Aeson.FromJSON MapExtent where
 
 type WKID = Int
 
-req1 :: MapExtent -> WKID -> Wreq.Options
-req1 mapExtent@(MapExtent{..}) wkid = req mapExtent geometryValue wkid "all" "esriGeometryPoint"
--- req1 mapExtent@(MapExtent{..}) wkid = req mapExtent geometryValue wkid "all:2,3" "esriGeometryPoint"
-  where
-    geometryValue = Aeson.object
-      [ "x" .= tshow ((_xmin + _xmax) / 2.0)
-      , "y" .= tshow ((_ymin + _ymax) / 2.0)
-      , "spatialReference" .= Aeson.object
-        [ "wkid" .= wkid
-        , "latestWkid" .= wkid
-        ]
-      ]
+main :: IO ()
+main = do
+  Scotty.scotty 3000 $ do
+    Scotty.get "/index.html" $ Scotty.file "typescript-austin-zoning/index.html"
+    Scotty.get "/bundle.js"  $ Scotty.file "typescript-austin-zoning/bundle.js"
+    Scotty.post "/area" $ do
+      mapExtent :: MapExtent <- Scotty.jsonData
+      Scotty.json =<< liftIO (doStuff mapExtent)
 
 req :: MapExtent -> Aeson.Value -> WKID -> Text -> Text -> Wreq.Options
 req MapExtent{..} geometryValue wkid layers geometryType =
@@ -79,63 +76,31 @@ liftMaybe Nothing  = throwM MaybeException
 identify :: String
 identify = "http://www.austintexas.gov/GIS/REST/ZoningProfile/ZoningProfile/MapServer/identify"
 
-prettyPrint :: Aeson.Value -> Text
-prettyPrint = convertString . encodePretty
-
-main :: IO ()
-main = do
-  Scotty.scotty 3000 $ do
-    Scotty.get "/index.html" $ Scotty.file "typescript-austin-zoning/index.html"
-    Scotty.get "/bundle.js"  $ Scotty.file "typescript-austin-zoning/bundle.js"
-    Scotty.post "/area" $ do
-      mapExtent :: MapExtent <- Scotty.jsonData
-      Scotty.json =<< liftIO (doStuff mapExtent)
-
--- mapExtentDef = MapExtent (-10880963.8504) (-10880810.976) 3540104.5279 3540257.402
-
+wkid :: WKID
 wkid = 4326 -- lat/long
 
 doStuff :: MapExtent -> IO Aeson.Value
 doStuff mapExtent = do
-
-  -- r <- Wreq.getWith (req1 mapExtent wkid) identify
-
   let geometry = mkGeometry mapExtent
-  print geometry
 
-  -- geometry <- liftMaybe $ r ^? Wreq.responseBody
-  --                           . Aeson.key "results"
-  --                           . Aeson.nth 0
-  --                           . Aeson.key "geometry"
+      -- 5 is for zoning overlay
+      opts = req mapExtent geometry wkid "all:5" "esriGeometryPolygon"
 
-  let req_ = (req mapExtent geometry wkid "all:5" "esriGeometryPolygon")
-  putStrLn "req_ is "
-  print req_
-  r2 <- Wreq.getWith req_ identify
+  r2 <- Wreq.getWith opts identify
 
   resp2 <- liftMaybe $ r2 ^? Wreq.responseBody
-  json2 :: Aeson.Value <- liftMaybe $ Aeson.decode resp2
-
-  return json2
+  liftMaybe $ Aeson.decode resp2
 
 mkGeometry :: MapExtent -> Aeson.Value
 mkGeometry MapExtent{..} =
-  Aeson.object
-  [ "spatialReference" .= Aeson.object [ "wkid" .= wkid, "latestWkid" .= wkid ]
-  , "rings" .= V.fromList [
-      V.fromList
-      [ V.fromList [ _xmin, _ymin ]
-      , V.fromList [ _xmin, _ymax ]
-      , V.fromList [ _xmax, _ymax ]
-      , V.fromList [ _xmax, _ymin ]
+  [aesonQQ|
+    { spatialReference: { wkid: #{wkid}, latestWkid: #{wkid} }
+    , rings: [
+        [ [#{_xmin}, #{_ymin}]
+        , [#{_xmin}, #{_ymax}]
+        , [#{_xmax}, #{_ymax}]
+        , [#{_xmax}, #{_ymin}]
+        ]
       ]
-    ]
-  ]
-
-string :: Text -> Text
-string = id
-
-int :: Int -> Int
-int = id
-
-  -- putStrLn (prettyPrint geometry)
+    }
+  |]
