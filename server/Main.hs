@@ -39,8 +39,8 @@ type WKID = Int
 main :: IO ()
 main = do
   Scotty.scotty 3000 $ do
-    Scotty.get "/index.html" $ Scotty.file "typescript-austin-zoning/index.html"
-    Scotty.get "/bundle.js"  $ Scotty.file "typescript-austin-zoning/bundle.js"
+    Scotty.get "/index.html" $ Scotty.file "../client/index.html"
+    Scotty.get "/bundle.js"  $ Scotty.file "../client/bundle.js"
     Scotty.post "/area" $ do
       mapExtent :: MapExtent <- Scotty.jsonData
       Scotty.json =<< liftIO (doStuff mapExtent)

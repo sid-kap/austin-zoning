@@ -1,3 +1,3 @@
-node_modules
-typescript-austin-zoning/bundle.js
-.stack-work
+client/node_modules
+client/bundle.js
+server/.stack-work
