@@ -46,6 +46,8 @@ layer.addTo(map);
 var layerGroup = L.layerGroup([]);
 layerGroup.addTo(map);
 
+var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/area";
+
 function onMapMove(e) {
     var bounds = map.getBounds();
     var data = JSON.stringify(
@@ -54,7 +56,7 @@ function onMapMove(e) {
         , "_ymin": bounds.getNorth()
         , "_ymax": bounds.getSouth()
         });
-    $.post("http://localhost:3000/area",
+    $.post(apiUrl,
         data,
            (result) => {
                console.log(result);
