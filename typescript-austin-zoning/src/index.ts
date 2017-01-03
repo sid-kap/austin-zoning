@@ -59,7 +59,7 @@ function onMapMove(e) {
            (result) => {
                console.log(result);
                layerGroup.clearLayers();
-               for (let entry of result.results.slice(0,500)) {
+               for (let entry of result.results) {
                    // if (entry.geometryType == "esriGeometryPoint") {
                    //     var marker = L.marker(L.latLng(entry.geometry.y, entry.geometry.x))
                    //         .bindPopup(entry.value)

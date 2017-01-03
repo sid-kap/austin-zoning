@@ -5,12 +5,13 @@
 # Installation
 This project is written in Haskell and Typescript.
 
-To run, you must have `stack` and `webpack` on your computer. You also should have all the required JavaScript dependencies stored in `typescript-austin-zoning/node_modules` (by going into `typescript-austin-zoning` and running `npm install` for each of the JavaScript dependencies). Currently the JS dependencies are not documented anywhere in this repo, so this step isn't possible for you. I intend to add them to the repo at some time (using a Yarn lockfile, maybe?) so that other people can build the project.
+To build, you must have `stack`, `webpack`, and `yarn` on your computer.
 
 Anyway, assuming you have the dependencies, you must do
 ```
 stack build
 pushd typescript-austin-zoning
+yarn
 webpack
 popd
 stack exec austin-zoning
