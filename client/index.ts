@@ -48,7 +48,7 @@ layerGroup.addTo(map);
 
 var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/area";
 
-function onMapMove(e) {
+function reloadZoningRegions() {
     var bounds = map.getBounds();
     var data = JSON.stringify(
         { "_xmin": bounds.getEast()
@@ -77,6 +77,8 @@ function onMapMove(e) {
           });
 }
 
-map.on('zoomend', onMapMove);
-map.on('moveend', onMapMove);
+map.on('zoomend', _ => reloadZoningRegions);
+map.on('moveend', _ => reloadZoningRegions);
 
+// run once on page load
+reloadZoningRegions();
